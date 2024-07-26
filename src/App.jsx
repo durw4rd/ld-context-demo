@@ -26,13 +26,31 @@ function App() {
   }
 
   const generateNewAnonymousUserContext = () => {
-    const newAnonymousUserContext = {
-      kind: 'anonymousUser',
-      key: faker.string.uuid(),
-      anonymous: true,
-    };
-    ldClient.identify(newAnonymousUserContext);
-    setLdContext(newAnonymousUserContext);
+    const existingContext = ldClient.getContext();
+    if (existingContext.kind === 'multi') {
+      const newAnonymousUserContext = {
+        key: faker.string.uuid(),
+        anonymous: true,
+      };
+      const updatedContext = {
+        kind: 'multi',
+        anonymousUser: newAnonymousUserContext,
+        user: existingContext.user
+      };
+
+      ldClient.identify(updatedContext);
+      setLdContext(ldClient.getContext());
+      return;
+    } else if (existingContext.kind === 'anonymousUser') {
+      const newAnonymousUserContext = {
+        kind: 'anonymousUser',
+        key: faker.string.uuid(),
+        anonymous: true,
+      };
+
+      ldClient.identify(newAnonymousUserContext);
+      setLdContext(newAnonymousUserContext);
+    }
   };
 
   const handleLogin = async () => {
