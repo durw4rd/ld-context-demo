@@ -18,7 +18,7 @@ function App() {
     if (ldClient) {
       setLdContext(ldClient.getContext());
     }
-  }, [ldContext]);
+  }, []);
 
   function capitalizeFirstLetter(string) {
     if (!string) return string;
@@ -32,6 +32,7 @@ function App() {
       anonymous: true,
     };
     ldClient.identify(newAnonymousUserContext);
+    setLdContext(ldClient.getContext());
   };
 
   const handleLogin = async () => {
