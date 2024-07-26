@@ -1,3 +1,23 @@
+.context-display {
+  text-align: left;
+  white-space: pre-wrap;
+  font-family: monospace;
+  background-color: #f5f5f5;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.context-kind {
+  color: #d9534f; /* Highlight color for context kinds */
+  font-weight: bold;
+}
+
+.context-attribute {
+  color: #5bc0de; /* Highlight color for top-level attributes */
+  font-weight: bold;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
