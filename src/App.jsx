@@ -32,7 +32,7 @@ function App() {
       anonymous: true,
     };
     ldClient.identify(newAnonymousUserContext);
-    setLdContext(ldClient.getContext());
+    setLdContext(newAnonymousUserContext);
   };
 
   const handleLogin = async () => {
