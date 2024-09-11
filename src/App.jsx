@@ -3,6 +3,7 @@ import './App.css'
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
+import { FaEnvelope } from 'react-icons/fa'
 
 function App() {
   const { releaseShinyBanner, showNewsletterSignup } = useFlags();
@@ -39,7 +40,7 @@ function App() {
       };
 
       ldClient.identify(updatedContext);
-      setLdContext(ldClient.getContext());
+      setLdContext(updatedContext);
       return;
     } else if (existingContext.kind === 'anonymousUser') {
       const newAnonymousUserContext = {
@@ -177,16 +178,17 @@ function App() {
   return (
     <>
       { releaseShinyBanner && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-200 p-4 rounded text-center border border-yellow-400 z-50">
-          🌟 Shiny banner released to 50% of all traffic! 🌟
+        <div className="fixed top-0 left-0 right-0 bg-yellow-200 p-4 text-center border border-yellow-400 mb-0 z-50 transform hover:scale-110 transition-transform duration-300">
+          🌟 Shiny banner released only to Gold customers! 🌟
         </div>
       ) }
-      <h1 className="text-center text-4xl font-bold my-8">LD Context Demo</h1>
       { showNewsletterSignup && (
-        <button className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4 rounded w-full mt-2 mb-4 text-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
-          Sign up for our newsletter, Gold customer!
+        <button className={`fixed ${releaseShinyBanner ? 'top-14' : 'top-0'} mt-0 left-0 right-0 p-4 rounded-none bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4 flex items-center justify-center transform hover:scale-110 transition-transform duration-300`}>
+          <FaEnvelope className="mr-2" />
+          Sign up for our newsletter - available to 50% of our traffic!
         </button>
       )}
+      <h1 className="text-center text-4xl font-bold my-8">LD Context Demo</h1>
       <div>
         { user ? accountOverviewComponent() : loginComponent()}
       </div>
