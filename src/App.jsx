@@ -4,6 +4,8 @@ import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
 import { FaEnvelope } from 'react-icons/fa'
+import AllFlagsDisplay from './components/AllFlagsDisplay'
+import LifecycleLogger from './components/LifecycleLogger'
 
 function App() {
   const { releaseShinyBanner, showNewsletterSignup } = useFlags();
@@ -46,31 +48,62 @@ function App() {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
-  const generateNewAnonymousUserContext = () => {
+  const generateNewAnonymousUserContext = async () => {
+    if (!ldClient) return;
+    
     const existingContext = ldClient.getContext();
-    if (existingContext.kind === 'multi') {
-      const newAnonymousUserContext = {
-        key: faker.string.uuid(),
-        anonymous: true,
-      };
-      const updatedContext = {
-        kind: 'multi',
-        anonymousUser: newAnonymousUserContext,
-        user: existingContext.user
-      };
+    const newAnonymousKey = faker.string.uuid();
+    
+    // Save the new anonymous key to sessionStorage
+    sessionStorage.setItem('ld_anonymous_user_key', newAnonymousKey);
+    
+    try {
+      if (existingContext.kind === 'multi') {
+        const newAnonymousUserContext = {
+          key: newAnonymousKey,
+          anonymous: true,
+        };
+        const updatedContext = {
+          kind: 'multi',
+          anonymousUser: newAnonymousUserContext,
+          user: existingContext.user
+        };
 
-      ldClient.identify(updatedContext);
-      setLdContext(updatedContext);
-      return;
-    } else if (existingContext.kind === 'anonymousUser') {
-      const newAnonymousUserContext = {
-        kind: 'anonymousUser',
-        key: faker.string.uuid(),
-        anonymous: true,
-      };
+        await ldClient.identify(updatedContext);
+        setLdContext(updatedContext);
+        return;
+      } else if (existingContext.kind === 'anonymousUser') {
+        const newAnonymousUserContext = {
+          kind: 'anonymousUser',
+          key: newAnonymousKey,
+          anonymous: true,
+        };
 
-      ldClient.identify(newAnonymousUserContext);
-      setLdContext(newAnonymousUserContext);
+        await ldClient.identify(newAnonymousUserContext);
+        setLdContext(newAnonymousUserContext);
+      }
+    } catch (error) {
+      // Handle network errors gracefully
+      console.error('Failed to identify new anonymous user context:', error);
+      // Still update the local context even if the network call fails
+      // This allows the UI to update even when offline
+      if (existingContext.kind === 'multi') {
+        const updatedContext = {
+          kind: 'multi',
+          anonymousUser: {
+            key: newAnonymousKey,
+            anonymous: true,
+          },
+          user: existingContext.user
+        };
+        setLdContext(updatedContext);
+      } else if (existingContext.kind === 'anonymousUser') {
+        setLdContext({
+          kind: 'anonymousUser',
+          key: newAnonymousKey,
+          anonymous: true,
+        });
+      }
     }
   };
 
@@ -97,17 +130,28 @@ function App() {
           };
         }
 
+        // Get the anonymous user key from sessionStorage or use the existing one
+        const anonymousKey = sessionStorage.getItem('ld_anonymous_user_key') || 
+                            (existingContext.anonymousUser?.key || existingContext.key);
+
         const updatedContext = {
           kind: 'multi',
           anonymousUser: {
-            key: existingContext.key,
+            key: anonymousKey,
             anonymous: true
           },
           user: newUserContext
         };
 
-        await ldClient.identify(updatedContext);
-        setLdContext(ldClient.getContext());
+        try {
+          await ldClient.identify(updatedContext);
+          setLdContext(ldClient.getContext());
+        } catch (error) {
+          // Handle network errors gracefully
+          console.error('Failed to identify user context:', error);
+          // Still update the local context even if the network call fails
+          setLdContext(updatedContext);
+        }
       }
     } else {
       setError('Please enter both username and password.');
@@ -120,15 +164,24 @@ function App() {
 
     if (ldClient) {
       const existingContext = ldClient.getContext();
-      const anonymousUserContext = existingContext.anonymousUser;
+      // Get the anonymous user key from sessionStorage or use the existing one
+      const anonymousKey = sessionStorage.getItem('ld_anonymous_user_key') || (existingContext.anonymousUser?.key || existingContext.key);
   
       const updatedContext = {
         kind: 'anonymousUser',
-        ...anonymousUserContext
+        key: anonymousKey,
+        anonymous: true
       };
   
-      await ldClient.identify(updatedContext);
-      setLdContext(ldClient.getContext());
+      try {
+        await ldClient.identify(updatedContext);
+        setLdContext(ldClient.getContext());
+      } catch (error) {
+        // Handle network errors gracefully
+        console.error('Failed to identify anonymous user context:', error);
+        // Still update the local context even if the network call fails
+        setLdContext(updatedContext);
+      }
     }
   };
 
@@ -171,25 +224,27 @@ function App() {
   const accountOverviewComponent = () => {
 
     return (
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-lg">
-          <h2 className="text-2xl font-bold mb-4">Account Overview</h2>
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold">Profile Information</h3>
-            <br/>
-            <p className="text-gray-700 text-left">Name: {user}</p>
-            <p className="text-gray-700 text-left">Email: {user.toLowerCase()}@example.com</p>
-            <p className="text-gray-700 text-left">Customer status: {ldContext && ldContext.user && capitalizeFirstLetter(ldContext.user.customerStatus)} customer</p>
+      <div className="flex flex-col items-center justify-center m-4">
+        <div className="bg-white p-6 rounded shadow-md w-full max-w-lg">
+            <h2 className="text-2xl font-bold mb-4">Account Overview</h2>
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold">Profile Information</h3>
+              <br/>
+              <p className="text-gray-700 text-left">Name: {user}</p>
+              <p className="text-gray-700 text-left">Email: {user.toLowerCase()}@example.com</p>
+              <p className="text-gray-700 text-left">Customer status: {ldContext && ldContext.user && capitalizeFirstLetter(ldContext.user.customerStatus)} customer</p>
+            </div>
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold">Settings</h3>
+              <br/>
+              <button className="bg-blue-500 text-white p-2 rounded w-full">Change Password</button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white p-2 rounded w-full mt-2"
+              >
+                Logout
+              </button>
           </div>
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold">Settings</h3>
-            <br/>
-            <button className="bg-blue-500 text-white p-2 rounded w-full">Change Password</button>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white p-2 rounded w-full mt-2"
-            >
-              Logout
-            </button>
         </div>
       </div>
     )
@@ -199,28 +254,34 @@ function App() {
     <>
       { releaseShinyBanner && (
         <div className="fixed top-0 left-0 right-0 bg-yellow-200 p-4 text-center border border-yellow-400 mb-0 z-50 transform hover:scale-110 transition-transform duration-300">
-          🌟 Shiny banner released only to Gold customers! 🌟
+          🌟 Shiny banner released only to Bronze customers! 🌟
         </div>
       ) }
       { showNewsletterSignup && (
-        <button className={`fixed ${releaseShinyBanner ? 'top-14' : 'top-0'} mt-0 left-0 right-0 p-4 rounded-none bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4 flex items-center justify-center transform hover:scale-110 transition-transform duration-300`}>
+        <button className={`fixed ${releaseShinyBanner ? 'top-14' : 'top-0'} left-0 right-0 p-4 rounded-none bg-gradient-to-r from-blue-500 to-blue-700 text-white flex items-center justify-center transform hover:scale-110 transition-transform duration-300 z-50`}>
           <FaEnvelope className="mr-2" />
           Sign up for our newsletter - available to 50% of our traffic!
         </button>
       )}
-      <h1 className="text-center text-4xl font-bold my-8">LD Context Demo</h1>
+      <h1 className={`text-center text-4xl font-bold my-8 ${releaseShinyBanner && showNewsletterSignup ? 'mt-32' : releaseShinyBanner || showNewsletterSignup ? 'mt-24' : 'mt-8'}`}>LD Context Demo</h1>
       <div>
         { user ? accountOverviewComponent() : loginComponent()}
       </div>
-      <div>
+      <div className="flex flex-col items-center justify-center m-4">
         <pre className="context-display" dangerouslySetInnerHTML={{ __html: formatContext(ldContext) }} />
       </div>
-      <button 
-        onClick={generateNewAnonymousUserContext} 
-        className="bg-green-500 text-white p-2 rounded w-full mt-4 mb-4 text-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
-      >
-        Generate New Anonymous User Context
-      </button>
+      <div className="flex flex-col items-center justify-center m-4">
+        <button 
+          onClick={generateNewAnonymousUserContext} 
+          className="bg-green-500 text-white p-2 rounded w-full max-w-md mt-4 mb-4 text-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
+        >
+          Generate New Anonymous User Context
+        </button>
+      </div>
+      <div className="flex flex-col items-center justify-center m-4">
+        <AllFlagsDisplay />
+      </div>
+      <LifecycleLogger />
     </>
   )
 }

@@ -11,9 +11,21 @@ import Cookies from 'js-cookie';
 
 const ldClientSideID = process.env.REACT_APP_LD_CLIENT_ID;
 
+// Helper function to get or create anonymous user key from sessionStorage
+const getOrCreateAnonymousUserKey = () => {
+  const storageKey = 'ld_anonymous_user_key';
+  let anonymousKey = sessionStorage.getItem(storageKey);
+  
+  if (!anonymousKey) {
+    anonymousKey = faker.string.uuid();
+    sessionStorage.setItem(storageKey, anonymousKey);
+  }
+  
+  return anonymousKey;
+};
+
 const user = Cookies.get('user') || null;
 let ldDefaultContext = {};
-
 
 if (user) {
   const customeStatus = user === 'Michal' ? 'gold' : 'bronze';
@@ -25,26 +37,28 @@ if (user) {
       customerStatus: customeStatus
     },
     anonymousUser: {
-      key: faker.string.uuid(),
+      key: getOrCreateAnonymousUserKey(),
       anonymous: true
     }
   };
 } else {
   ldDefaultContext = {
     kind: 'anonymousUser',
-    key: faker.string.uuid(),
+    key: getOrCreateAnonymousUserKey(),
     anonymous: true
   };
 }
 
 const ldInitOptions = {
   logger: basicLogger({
-    level: "info",
+    level: "debug",
   }),
   application: {
     version: "1.0",
     id: "ld-context-demo",
-  }
+  },
+  bootstrap: "localStorage",
+  evaluationReasons: true
 };
 
 (async () => {
@@ -52,6 +66,7 @@ const ldInitOptions = {
     clientSideID: ldClientSideID,
     context: ldDefaultContext,
     options: ldInitOptions,
+    timeout: 5,
   });
 
   ReactDOM.createRoot(document.getElementById('root')).render(
