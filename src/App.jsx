@@ -21,6 +21,26 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (ldClient) {
+      const handleChange = (changes) => {
+        console.log('##### Flags changed START #####');
+        for (let flagKey in changes) {
+          const flagValue = changes[flagKey].current;
+          console.log(`${flagKey}: ${flagValue}`);
+        }
+        console.log('##### Flags changed STOP #####');
+      };
+  
+      ldClient.on('change', handleChange);
+  
+      // Cleanup function to remove the event listener when the component unmounts
+      return () => {
+        ldClient.off('change', handleChange);
+      };
+    }
+  }, [ldClient]);
+
   function capitalizeFirstLetter(string) {
     if (!string) return string;
     return string.charAt(0).toUpperCase() + string.slice(1);

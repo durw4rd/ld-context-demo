@@ -35,33 +35,11 @@ if (user) {
     key: faker.string.uuid(),
     anonymous: true
   };
-  // ldDefaultContext = {
-  //   "kind": "multi",
-  //   "user": {
-  //     "key": "user-key-123abc",
-  //     "name": "Anna",
-  //     "email": "anna@globalhealthexample.com",
-  //     "jobFunction": "doctor"
-  //     },
-  //   "organization": {
-  //     "key": "org-key-456def",
-  //     "name": "Midway Global Health Services",
-  //     "address": {
-  //       "street": "456 1st Ave",
-  //       "city": "Midway"
-  //       }
-  //     },
-  //   "device": {
-  //     "key": "device-key-456def",
-  //     "name": "iPad",
-  //     "os": "iOS"
-  //     }
-  // }
 }
 
 const ldInitOptions = {
   logger: basicLogger({
-    level: "debug",
+    level: "info",
   }),
   application: {
     version: "1.0",
