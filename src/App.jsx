@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
+import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
 import { FaEnvelope } from 'react-icons/fa'
 import AllFlagsDisplay from './components/AllFlagsDisplay'
-import LifecycleLogger from './components/LifecycleLogger'
+import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx';
 
 function App() {
   const { releaseShinyBanner, showNewsletterSignup } = useFlags();
@@ -16,6 +17,14 @@ function App() {
   const [user, setUser] = useState(Cookies.get('user') || null);
   const [error, setError] = useState('');
   const [ldContext, setLdContext] = useState(null);
+
+  // Initialize LaunchDarkly developer toolbar (development only)
+  useLaunchDarklyToolbar({
+    flagOverridePlugin,
+    eventInterceptionPlugin,
+    position: 'bottom-right',
+    enabled: process.env.NODE_ENV === 'development'
+  });
 
   useEffect(() => {
     if (ldClient) {
@@ -281,7 +290,6 @@ function App() {
       <div className="flex flex-col items-center justify-center m-4">
         <AllFlagsDisplay />
       </div>
-      <LifecycleLogger />
     </>
   )
 }

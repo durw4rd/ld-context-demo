@@ -6,10 +6,18 @@ import './index.css'
 
 import { asyncWithLDProvider } from "launchdarkly-react-client-sdk"
 import { basicLogger } from "launchdarkly-js-client-sdk"
+import { 
+  FlagOverridePlugin, 
+  EventInterceptionPlugin 
+} from '@launchdarkly/toolbar';
+
 import { faker } from '@faker-js/faker'
 import Cookies from 'js-cookie';
 
 const ldClientSideID = process.env.REACT_APP_LD_CLIENT_ID;
+
+export const flagOverridePlugin = new FlagOverridePlugin();
+export const eventInterceptionPlugin = new EventInterceptionPlugin();
 
 // Helper function to get or create anonymous user key from sessionStorage
 const getOrCreateAnonymousUserKey = () => {
@@ -58,7 +66,11 @@ const ldInitOptions = {
     id: "ld-context-demo",
   },
   bootstrap: "localStorage",
-  evaluationReasons: true
+  evaluationReasons: true,
+  plugins: [
+    flagOverridePlugin, 
+    eventInterceptionPlugin
+  ]
 };
 
 (async () => {
