@@ -4,12 +4,12 @@ import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
-import { FaEnvelope } from 'react-icons/fa'
+import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode } from 'react-icons/fa'
 import AllFlagsDisplay from './components/AllFlagsDisplay'
 import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx';
 
 function App() {
-  const { releaseShinyBanner, showNewsletterSignup } = useFlags();
+  const { releaseShinyBanner, showNewsletterSignup, createUserButtonColour } = useFlags();
   const ldClient = useLDClient();
 
   const [username, setUsername] = useState('');
@@ -23,7 +23,7 @@ function App() {
     flagOverridePlugin,
     eventInterceptionPlugin,
     position: 'bottom-right',
-    enabled: process.env.NODE_ENV === 'development'
+    enabled: import.meta.env.DEV
   });
 
   useEffect(() => {
@@ -201,96 +201,180 @@ function App() {
       .replace(/"(\w+)": {/g, '"<span class="context-attribute">$1</span>": {');
   };
 
+  const getCustomerStatusBadge = () => {
+    const status = ldContext?.user?.customerStatus;
+    if (!status) return null;
+    
+    const isGold = status === 'gold';
+    return (
+      <span className={`badge ${isGold ? 'badge-gold' : 'badge-bronze'}`}>
+        {status}
+      </span>
+    );
+  };
+
   const loginComponent = () => (
-    <div className="flex flex-col items-center justify-center m-4">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-4">Login Screen</h2>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="mb-2 p-2 border border-gray-300 rounded w-full"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 p-2 border border-gray-300 rounded w-full"
-        />
-        <button
-          onClick={handleLogin}
-          className="bg-blue-500 text-white p-2 rounded w-full"
-        >
-          Login
-        </button>
-        {error && <p className="text-red-500 mt-2">{error}</p>}
+    <div className="flex flex-col items-center justify-center animate-fade-in">
+      <div className="auth-card w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] mb-4">
+            <FaUser className="text-2xl text-[var(--color-bg-primary)]" />
+          </div>
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Welcome Back</h2>
+          <p className="text-[var(--color-text-muted)] mt-1">Sign in to your account</p>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="relative">
+            <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              className="w-full !pl-12"
+            />
+          </div>
+          <div className="relative">
+            <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              className="w-full !pl-12"
+            />
+          </div>
+          
+          <button
+            onClick={handleLogin}
+            className="btn-primary w-full py-3 text-base"
+          >
+            Sign In
+          </button>
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 
   const accountOverviewComponent = () => {
-
     return (
-      <div className="flex flex-col items-center justify-center m-4">
-        <div className="bg-white p-6 rounded shadow-md w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-4">Account Overview</h2>
-            <div className="mb-4">
-              <h3 className="text-xl font-semibold">Profile Information</h3>
-              <br/>
-              <p className="text-gray-700 text-left">Name: {user}</p>
-              <p className="text-gray-700 text-left">Email: {user.toLowerCase()}@example.com</p>
-              <p className="text-gray-700 text-left">Customer status: {ldContext && ldContext.user && capitalizeFirstLetter(ldContext.user.customerStatus)} customer</p>
+      <div className="flex flex-col items-center justify-center animate-fade-in">
+        <div className="auth-card w-full max-w-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] flex items-center justify-center text-xl font-bold text-[var(--color-bg-primary)]">
+              {user.charAt(0).toUpperCase()}
             </div>
-            <div className="mb-4">
-              <h3 className="text-xl font-semibold">Settings</h3>
-              <br/>
-              <button className="bg-blue-500 text-white p-2 rounded w-full">Change Password</button>
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{user}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                {getCustomerStatusBadge()}
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="section-title">Profile Information</h3>
+            <div className="profile-info">
+              <div className="profile-info-item">
+                <span className="profile-info-label">Name</span>
+                <span className="profile-info-value">{user}</span>
+              </div>
+              <div className="profile-info-item">
+                <span className="profile-info-label">Email</span>
+                <span className="profile-info-value">{user.toLowerCase()}@example.com</span>
+              </div>
+              <div className="profile-info-item">
+                <span className="profile-info-label">Status</span>
+                <span className="profile-info-value">
+                  {getCustomerStatusBadge()}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="section-title">Actions</h3>
+            <div className="grid gap-3">
               <button
                 onClick={handleLogout}
-                className="bg-red-500 text-white p-2 rounded w-full mt-2"
+                className="btn-danger w-full flex items-center justify-center gap-2"
               >
-                Logout
+                <FaSignOutAlt /> Sign Out
               </button>
+            </div>
           </div>
         </div>
       </div>
-    )
+    );
   };
 
   return (
-    <>
+    <div className="min-h-screen">
+      {/* Promotional Banners */}
       { releaseShinyBanner && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-200 p-4 text-center border border-yellow-400 mb-0 z-50 transform hover:scale-110 transition-transform duration-300">
-          🌟 Shiny banner released only to Bronze customers! 🌟
+        <div className="fixed top-0 left-0 right-0 promo-banner promo-banner-shiny p-4 text-center z-50 animate-slide-down">
+          <span className="font-medium">🌟 Exclusive offer for Bronze customers! Limited time only 🌟</span>
         </div>
-      ) }
+      )}
       { showNewsletterSignup && (
-        <button className={`fixed ${releaseShinyBanner ? 'top-14' : 'top-0'} left-0 right-0 p-4 rounded-none bg-gradient-to-r from-blue-500 to-blue-700 text-white flex items-center justify-center transform hover:scale-110 transition-transform duration-300 z-50`}>
-          <FaEnvelope className="mr-2" />
-          Sign up for our newsletter - available to 50% of our traffic!
+        <button className={`fixed ${releaseShinyBanner ? 'top-[52px]' : 'top-0'} left-0 right-0 promo-banner promo-banner-newsletter p-4 flex items-center justify-center gap-2 z-50 animate-slide-down rounded-none border-0`}>
+          <FaEnvelope />
+          <span className="font-medium">Sign up for our newsletter - available to 50% of our traffic!</span>
         </button>
       )}
-      <h1 className={`text-center text-4xl font-bold my-8 ${releaseShinyBanner && showNewsletterSignup ? 'mt-32' : releaseShinyBanner || showNewsletterSignup ? 'mt-24' : 'mt-8'}`}>LD Context Demo</h1>
-      <div>
-        { user ? accountOverviewComponent() : loginComponent()}
-      </div>
-      <div className="flex flex-col items-center justify-center m-4">
-        <pre className="context-display" dangerouslySetInnerHTML={{ __html: formatContext(ldContext) }} />
-      </div>
-      <div className="flex flex-col items-center justify-center m-4">
-        <button 
-          onClick={generateNewAnonymousUserContext} 
-          className="bg-green-500 text-white p-2 rounded w-full max-w-md mt-4 mb-4 text-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
-        >
-          Generate New Anonymous User Context
-        </button>
-      </div>
-      <div className="flex flex-col items-center justify-center m-4">
-        <AllFlagsDisplay />
-      </div>
-    </>
+      
+      {/* Header */}
+      <header className={`app-header ${releaseShinyBanner && showNewsletterSignup ? 'pt-32' : releaseShinyBanner || showNewsletterSignup ? 'pt-20' : 'pt-8'}`}>
+        <div className="app-logo">
+          <div className="app-logo-icon">
+            <FaRocket />
+          </div>
+          <h1>LD Context Demo</h1>
+        </div>
+        <p className="app-subtitle">Feature flag management with LaunchDarkly</p>
+      </header>
+      
+      {/* Main Content */}
+      <main className="space-y-8">
+        {/* Auth Section */}
+        <section>
+          { user ? accountOverviewComponent() : loginComponent()}
+        </section>
+        
+        {/* Context Display */}
+        <section className="flex flex-col items-center">
+          <div className="w-full max-w-lg">
+            <h3 className="section-title mb-4">
+              <FaCode className="text-[var(--color-accent-primary)]" />
+              Current Context
+            </h3>
+            <pre className="context-display" dangerouslySetInnerHTML={{ __html: formatContext(ldContext) }} />
+            
+            <button 
+              onClick={generateNewAnonymousUserContext} 
+              className={`w-full mt-4 py-3 text-base flex items-center justify-center gap-2 ${createUserButtonColour === 'red' ? 'btn-danger' : 'btn-success'}`}
+            >
+              <FaUser />
+              Generate New Anonymous User Context
+            </button>
+          </div>
+        </section>
+        
+        {/* Feature Flags Display */}
+        <section className="flex flex-col items-center">
+          <AllFlagsDisplay />
+        </section>
+      </main>
+    </div>
   )
 }
 
