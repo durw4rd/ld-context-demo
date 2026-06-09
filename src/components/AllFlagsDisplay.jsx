@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { FaFlag, FaCheckCircle, FaTimesCircle, FaInfoCircle } from 'react-icons/fa';
 
@@ -6,12 +6,11 @@ function AllFlagsDisplay() {
   const ldClient = useLDClient();
   const [flagsData, setFlagsData] = useState([]);
 
-  const updateFlags = async () => {
+  const updateFlags = useCallback(async () => {
     if (ldClient) {
       const allFlags = ldClient.allFlags();
       const flagKeys = Object.keys(allFlags);
       
-      // Get evaluation details for each flag
       const flagsWithReasons = flagKeys.map(key => {
         const value = allFlags[key];
         const detail = ldClient.variationDetail(key, null);
@@ -24,25 +23,23 @@ function AllFlagsDisplay() {
       
       setFlagsData(flagsWithReasons);
     }
-  };
+  }, [ldClient]);
 
   useEffect(() => {
     updateFlags();
 
     if (ldClient) {
-      // Listen for flag changes
       const handleChange = () => {
         updateFlags();
       };
 
       ldClient.on('change', handleChange);
 
-      // Cleanup function to remove the event listener when the component unmounts
       return () => {
         ldClient.off('change', handleChange);
       };
     }
-  }, [ldClient]);
+  }, [ldClient, updateFlags]);
 
   const formatValue = (value) => {
     if (value === null || value === undefined) {

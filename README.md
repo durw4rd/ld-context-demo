@@ -1,55 +1,47 @@
 # LaunchDarkly Context Demo
 
-A React application demonstrating LaunchDarkly feature flag integration with context management and real-time flag evaluation.
+A live demo app for showing how LaunchDarkly **contexts** and **feature flags** work together.
 
-## Features
+**Live demo:** https://ld-context-demo.vercel.app/
 
-- **User Authentication**: Login/logout functionality with user context management
-- **Feature Flag Display**: View all feature flags in the project with their current values
-- **Evaluation Reasons**: See why each flag was evaluated the way it was (rule match, fallthrough, etc.)
-- **Lifecycle Event Logger**: Real-time sidebar component tracking LaunchDarkly SDK lifecycle events (ready, initialized, failed, error, change)
-- **Context Management**: 
-  - Multi-context support (user + anonymous user)
-  - Anonymous user key persistence across page reloads (sessionStorage)
-  - Manual anonymous user context regeneration
-- **SDK Configuration**:
-  - Bootstrap from localStorage for offline support
-  - Evaluation reasons enabled for detailed flag evaluation insights
-  - 5-second initialization timeout
+For technical details (SDK config, file map, context shapes), see [APP_ARCHITECTURE.md](./APP_ARCHITECTURE.md).
 
-## Tech Stack
+## What this demo shows
 
-- React 18
-- Vite 7.2
-- LaunchDarkly React Web SDK
-- Tailwind CSS
+The app simulates a signed-in product experience where LaunchDarkly evaluates flags against a rich user context — not just a user ID. It is designed for recordings, workshops, and internal demos rather than local development by third parties.
 
-## Getting Started
+### Context management
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+- **Anonymous browsing** — visitors get a persistent anonymous context (UUID stored in session storage).
+- **Login** — any username/password creates a multi-context: logged-in user + the same anonymous context.
+- **Logout** — returns to anonymous-only context while keeping the anonymous key.
+- **Regenerate anonymous context** — generates a new anonymous UUID without signing out.
 
-2. Set up environment variables:
-   - Create a `.env` file with your LaunchDarkly client-side ID:
-     ```
-     REACT_APP_LD_CLIENT_ID=your-client-side-id
-     ```
+Context attributes drive targeting:
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+- `customerStatus` — `"gold"` for username **Michal**, `"bronze"` for everyone else
+- `email` — synthetic `{username}@example.com`, marked as a **private attribute** (not sent in LD events)
 
-4. Build for production:
-   ```bash
-   npm run build
-   ```
+The current context is displayed as formatted JSON on the page.
 
-## Usage
+### Feature flags in the UI
 
-- **Login**: Use any username/password to log in. The username "Michal" will be assigned "gold" customer status, others get "bronze"
-- **View Flags**: The "All Feature Flags" table shows all flags with their values and evaluation reasons
-- **Lifecycle Events**: The collapsible sidebar on the right shows real-time SDK lifecycle events
-- **Generate Anonymous Context**: Click the button to generate a new anonymous user context key
+Several flags control visible behavior:
+
+- **Promotional banners** — top-of-page offers driven by `releaseShinyBanner` and `showNewsletterSignup`
+- **Button styling** — anonymous-context button color from `createUserButtonColour`
+- **Header accent** — small icon beside the logo from `appLogo` (`moon`, `star`, or `rocket`)
+
+A **Feature Flags** table lists every flag in the project with its current value and **evaluation reason** (rule match, fallthrough, etc.).
+
+### Observability
+
+The app includes LaunchDarkly **Observability** and **Session Replay** plugins so sessions, errors, and interactions can be viewed in the LaunchDarkly Observability UI after visiting the live demo.
+
+### Developer toolbar
+
+When running locally in development mode, the LaunchDarkly developer toolbar provides flag overrides and event interception. It is disabled in production builds.
+
+## Code references
+
+Flag usages in this repo are synced to LaunchDarkly via a GitHub Action on every push to `main`. See [APP_ARCHITECTURE.md](./APP_ARCHITECTURE.md#code-references-setup) for manual verification steps if code references are not appearing in the LD UI.
