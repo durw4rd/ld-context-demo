@@ -85,28 +85,15 @@ function AllFlagsDisplay() {
     return reasonText;
   };
 
-  const getReasonStyles = (reason) => {
-    if (!reason || !reason.kind) {
-      return 'bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)] border border-[var(--color-border)]';
-    }
-    
+  const getReasonClass = (reason) => {
+    if (!reason || !reason.kind) return 'reason-default';
     const kind = reason.kind.toUpperCase();
-    if (kind.includes('OFF') || kind.includes('DISABLED')) {
-      return 'bg-gray-800/50 text-gray-400 border border-gray-700';
-    }
-    if (kind.includes('FALLTHROUGH') || kind.includes('DEFAULT')) {
-      return 'bg-blue-900/30 text-blue-400 border border-blue-800/50';
-    }
-    if (kind.includes('RULE') || kind.includes('TARGET')) {
-      return 'bg-emerald-900/30 text-emerald-400 border border-emerald-800/50';
-    }
-    if (kind.includes('PREREQUISITE')) {
-      return 'bg-amber-900/30 text-amber-400 border border-amber-800/50';
-    }
-    if (kind.includes('ERROR')) {
-      return 'bg-red-900/30 text-red-400 border border-red-800/50';
-    }
-    return 'bg-purple-900/30 text-purple-400 border border-purple-800/50';
+    if (kind.includes('OFF') || kind.includes('DISABLED')) return 'reason-off';
+    if (kind.includes('FALLTHROUGH') || kind.includes('DEFAULT')) return 'reason-fallthrough';
+    if (kind.includes('RULE') || kind.includes('TARGET')) return 'reason-rule';
+    if (kind.includes('PREREQUISITE')) return 'reason-prereq';
+    if (kind.includes('ERROR')) return 'reason-error';
+    return 'reason-default';
   };
 
   const getValueIcon = (value) => {
@@ -121,51 +108,47 @@ function AllFlagsDisplay() {
   };
 
   return (
-    <div className="w-full max-w-4xl animate-fade-in">
-      <h3 className="section-title mb-4">
-        <FaFlag className="text-[var(--color-accent-secondary)]" />
-        Feature Flags
-      </h3>
-      
-      <div className="flags-table">
+    <>
+      <div className="dashboard-panel-header">
+        <h2 className="dashboard-panel-title">
+          <FaFlag />
+          Feature Flags
+        </h2>
+        <span className="text-xs text-[var(--color-text-muted)]">
+          {flagsData.length} flag{flagsData.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <div className="flags-table animate-fade-in">
         {flagsData.length === 0 ? (
-          <div className="p-8 text-center text-[var(--color-text-muted)]">
-            <FaFlag className="text-4xl mx-auto mb-3 opacity-50" />
+          <div className="flags-empty">
+            <FaFlag className="mx-auto block" />
             <p>No flags available</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table>
               <thead>
                 <tr>
-                  <th className="text-left">Flag Key</th>
-                  <th className="text-left">Value</th>
-                  <th className="text-left">Evaluation Reason</th>
+                  <th>Flag Key</th>
+                  <th>Value</th>
+                  <th>Evaluation Reason</th>
                 </tr>
               </thead>
               <tbody>
-                {flagsData.map(({ key, value, reason }, index) => (
-                  <tr 
-                    key={key} 
-                    className="transition-colors"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <td className="font-mono font-semibold text-[var(--color-text-primary)]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)]"></span>
-                        {key}
-                      </div>
+                {flagsData.map(({ key, value, reason }) => (
+                  <tr key={key}>
+                    <td>
+                      <span className="flag-key">{key}</span>
                     </td>
                     <td>
                       <div className="flex items-center gap-2">
                         {getValueIcon(value)}
-                        <pre className="font-mono text-sm whitespace-pre-wrap break-words text-[var(--color-text-secondary)]">
-                          {formatValue(value)}
-                        </pre>
+                        <pre className="flag-value">{formatValue(value)}</pre>
                       </div>
                     </td>
                     <td>
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${getReasonStyles(reason)}`}>
+                      <span className={`reason-badge ${getReasonClass(reason)}`}>
                         {formatEvaluationReason(reason)}
                       </span>
                     </td>
@@ -175,25 +158,27 @@ function AllFlagsDisplay() {
             </table>
           </div>
         )}
-        
-        <div className="px-6 py-4 border-t border-[var(--color-border)] flex items-center justify-between">
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Total flags: <span className="text-[var(--color-accent-primary)] font-semibold">{flagsData.length}</span>
-          </p>
-          <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)]">
-            <span className="flex items-center gap-1">
-              <FaCheckCircle className="text-emerald-400" /> True
-            </span>
-            <span className="flex items-center gap-1">
-              <FaTimesCircle className="text-red-400" /> False
-            </span>
-            <span className="flex items-center gap-1">
-              <FaInfoCircle className="text-blue-400" /> Other
-            </span>
+
+        {flagsData.length > 0 && (
+          <div className="flags-table-footer">
+            <p>
+              Total flags: <span className="flags-table-footer-count">{flagsData.length}</span>
+            </p>
+            <div className="flags-legend">
+              <span className="flex items-center gap-1">
+                <FaCheckCircle className="text-emerald-400" /> True
+              </span>
+              <span className="flex items-center gap-1">
+                <FaTimesCircle className="text-red-400" /> False
+              </span>
+              <span className="flex items-center gap-1">
+                <FaInfoCircle className="text-[var(--ld-blue-light)]" /> Other
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }
 

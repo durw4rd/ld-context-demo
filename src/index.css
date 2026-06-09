@@ -40,17 +40,12 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(163, 79, 222, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(64, 91, 255, 0.08) 0%, transparent 50%),
-    var(--ld-black);
-  background-attachment: fixed;
+  background: var(--ld-black);
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -107,10 +102,6 @@ button::before {
 
 button:hover::before {
   opacity: 1;
-}
-
-button:active {
-  transform: scale(0.98);
 }
 
 input[type="text"],
