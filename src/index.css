@@ -1,26 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import './brand/tokens/colors.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-bg-primary: #0f1419;
-  --color-bg-secondary: #1a1f2e;
-  --color-bg-card: #242938;
-  --color-bg-elevated: #2d3348;
-  --color-accent-primary: #00d4aa;
-  --color-accent-secondary: #7c3aed;
-  --color-accent-tertiary: #f59e0b;
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-border: #374151;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  
-  font-family: 'Outfit', system-ui, sans-serif;
+  --color-bg-primary: var(--ld-black);
+  --color-bg-secondary: var(--ld-gray-06);
+  --color-bg-card: var(--ld-gray-06);
+  --color-bg-elevated: var(--ld-gray-05);
+  --color-accent-primary: var(--ld-blue);
+  --color-accent-secondary: var(--ld-purple);
+  --color-accent-tertiary: var(--ld-lime);
+  --color-text-primary: var(--ld-white);
+  --color-text-secondary: var(--ld-gray-03);
+  --color-text-muted: var(--ld-gray-04);
+  --color-border: var(--ld-gray-05);
+  --color-success: var(--ld-cyan);
+  --color-warning: var(--ld-orange);
+  --color-error: var(--ld-pink);
+
+  font-family: var(--ld-font-body);
   line-height: 1.6;
   font-weight: 400;
   color-scheme: dark;
@@ -40,10 +40,10 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: 
-    radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
-    linear-gradient(180deg, var(--color-bg-primary) 0%, #0a0d12 100%);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(163, 79, 222, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(64, 91, 255, 0.08) 0%, transparent 50%),
+    var(--ld-black);
   background-attachment: fixed;
 }
 
@@ -53,38 +53,35 @@ body {
   padding: 2rem;
 }
 
-/* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-family: var(--ld-font-display);
+  font-weight: 700;
+  color: var(--ld-white);
   letter-spacing: -0.02em;
 }
 
 h1 {
   font-size: 2.5rem;
   line-height: 1.2;
-  background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
+  background: var(--ld-gradient-purple-blue);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Links */
 a {
   font-weight: 500;
-  color: var(--color-accent-primary);
+  color: var(--ld-link);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: #00ffc8;
+  color: var(--ld-blue-light);
 }
 
-/* Buttons */
 button {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--ld-font-body);
   border-radius: 12px;
   border: none;
   padding: 0.75em 1.5em;
@@ -116,11 +113,10 @@ button:active {
   transform: scale(0.98);
 }
 
-/* Inputs */
 input[type="text"],
 input[type="password"],
 input[type="email"] {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--ld-font-body);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -136,20 +132,16 @@ input::placeholder {
 
 input:focus {
   outline: none;
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15);
+  border-color: var(--ld-blue);
+  box-shadow: 0 0 0 3px rgba(64, 91, 255, 0.2);
 }
 
-/* Cards */
 .card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 1.5rem;
-  backdrop-filter: blur(10px);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .card-elevated {
@@ -157,14 +149,6 @@ input:focus {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Glass effect */
-.glass {
-  background: rgba(36, 41, 56, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -177,16 +161,15 @@ input:focus {
 }
 
 .badge-gold {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #1a1a1a;
+  background: var(--ld-gradient-pink-orange-lime);
+  color: var(--ld-black);
 }
 
 .badge-bronze {
-  background: linear-gradient(135deg, #d97706 0%, #a16207 100%);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--ld-orange) 0%, var(--ld-orange-dark) 100%);
+  color: var(--ld-black);
 }
 
-/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -197,11 +180,6 @@ input:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.5); }
-}
-
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }
@@ -210,7 +188,6 @@ input:focus {
   animation: slideDown 0.3s ease-out forwards;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -230,18 +207,9 @@ input:focus {
   background: var(--color-text-muted);
 }
 
-/* Utility classes */
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
+  background: var(--ld-gradient-purple-blue);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-.glow-primary {
-  box-shadow: 0 0 20px rgba(0, 212, 170, 0.3);
-}
-
-.glow-secondary {
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
 }

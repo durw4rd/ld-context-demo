@@ -1,10 +1,12 @@
+import ldBrand from './src/brand/tokens/tailwind.preset.js'
+
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: false, // Disable dark mode
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  presets: [ldBrand],
   theme: {
     extend: {},
   },

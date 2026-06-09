@@ -6,7 +6,7 @@ import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
 import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar } from 'react-icons/fa'
 import AllFlagsDisplay from './components/AllFlagsDisplay'
-import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx';
+import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx'
 
 function App() {
   const { releaseShinyBanner, showNewsletterSignup, createUserButtonColour, appLogo } = useFlags();
@@ -30,7 +30,7 @@ function App() {
     if (ldClient) {
       setLdContext(ldClient.getContext());
     }
-  }, []);
+  }, [ldClient]);
 
   useEffect(() => {
     if (ldClient) {
@@ -51,11 +51,6 @@ function App() {
       };
     }
   }, [ldClient]);
-
-  function capitalizeFirstLetter(string) {
-    if (!string) return string;
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
 
   const generateNewAnonymousUserContext = async () => {
     if (!ldClient) return;
@@ -355,12 +350,16 @@ function App() {
       {/* Header */}
       <header className={`app-header ${releaseShinyBanner && showNewsletterSignup ? 'pt-32' : releaseShinyBanner || showNewsletterSignup ? 'pt-20' : 'pt-8'}`}>
         <div className="app-logo">
-          <div className="app-logo-icon">
+          <img
+            src="/LaunchDarkly_RGB_Primary_Lock-up_White.svg"
+            alt="LaunchDarkly"
+            className="app-logo-lockup"
+          />
+          <div className="app-logo-icon" title={`appLogo flag: ${appLogo ?? 'rocket'}`}>
             {getLogoIcon()}
           </div>
-          <h1>LD Context Demo</h1>
         </div>
-        <p className="app-subtitle">Feature flag management with LaunchDarkly</p>
+        <p className="app-subtitle">Context management demo — feature flags with real-time evaluation</p>
       </header>
       
       {/* Main Content */}
