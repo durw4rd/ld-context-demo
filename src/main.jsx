@@ -1,15 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { useState } from 'react'
 import App from './App.jsx'
 import './index.css'
 
 import { asyncWithLDProvider } from "launchdarkly-react-client-sdk"
 import { basicLogger } from "launchdarkly-js-client-sdk"
-import { 
-  FlagOverridePlugin, 
-  EventInterceptionPlugin 
-} from '@launchdarkly/toolbar';
+import { FlagOverridePlugin, EventInterceptionPlugin } from '@launchdarkly/toolbar/plugins'
+import Observability from '@launchdarkly/observability'
+import SessionReplay from '@launchdarkly/session-replay'
 
 import { faker } from '@faker-js/faker'
 import Cookies from 'js-cookie';
@@ -73,8 +71,16 @@ const ldInitOptions = {
   sendEventsOnlyForVariation: true,
   evaluationReasons: true,
   plugins: [
-    flagOverridePlugin, 
-    eventInterceptionPlugin
+    flagOverridePlugin,
+    eventInterceptionPlugin,
+    new Observability({
+      networkRecording: { enabled: true },
+      version: '1.0',
+    }),
+    new SessionReplay({
+      serviceName: 'ld-context-demo',
+      privacySetting: 'strict',
+    }),
   ]
 };
 
