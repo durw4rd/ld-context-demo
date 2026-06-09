@@ -73,7 +73,7 @@ stateDiagram-v2
 |----------|------|-----------|
 | `release-shiny-banner` | boolean | Fixed promo banner at top |
 | `show-newsletter-signup` | boolean | Newsletter signup bar |
-| `create-user-button-colour` | string | `"red"` → danger button; else success |
+| `create-user-button-colour` | string | `"magenta"` → danger button (LD pink); `"cyan"` → success button (LD cyan) |
 | `app-logo` | string | Header accent icon: `moon`, `star`, or `rocket` (default) |
 
 Flags are read via typed variation hooks (`useBoolVariation`, `useStringVariation`) in [`src/App.jsx`](src/App.jsx). All flags are listed in `AllFlagsDisplay` with values and evaluation reasons.

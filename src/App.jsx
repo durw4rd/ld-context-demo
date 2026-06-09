@@ -46,7 +46,7 @@ function App() {
 function AppContent() {
   const releaseShinyBanner = useBoolVariation('release-shiny-banner', false);
   const showNewsletterSignup = useBoolVariation('show-newsletter-signup', false);
-  const createUserButtonColour = useStringVariation('create-user-button-colour', 'green');
+  const createUserButtonColour = useStringVariation('create-user-button-colour', 'cyan');
   const appLogo = useStringVariation('app-logo', 'rocket');
   const ldClient = useLDClient();
 
@@ -377,7 +377,7 @@ function AppContent() {
               <div className="context-actions">
                 <button
                   onClick={generateNewAnonymousUserContext}
-                  className={`w-full flex items-center justify-center gap-2 ${createUserButtonColour === 'red' ? 'btn-danger' : 'btn-success'}`}
+                  className={`w-full flex items-center justify-center gap-2 ${createUserButtonColour === 'magenta' ? 'btn-danger' : 'btn-success'}`}
                 >
                   <FaUser />
                   Generate New Anonymous User Context

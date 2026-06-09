@@ -238,7 +238,7 @@
 
 .auth-input-wrap input {
   width: 100%;
-  padding-left: 2.5rem;
+  padding: 0.85em 1em 0.85em 3rem;
 }
 
 .auth-error {
