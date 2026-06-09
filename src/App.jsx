@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
+import {
+  useBoolVariation,
+  useStringVariation,
+  useInitializationStatus,
+  useLDClient,
+} from '@launchdarkly/react-sdk';
 import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
@@ -9,7 +14,11 @@ import AllFlagsDisplay from './components/AllFlagsDisplay'
 import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx'
 
 function App() {
-  const { releaseShinyBanner, showNewsletterSignup, createUserButtonColour, appLogo } = useFlags();
+  const { status: initStatus, error: initError } = useInitializationStatus();
+  const releaseShinyBanner = useBoolVariation('release-shiny-banner', false);
+  const showNewsletterSignup = useBoolVariation('show-newsletter-signup', false);
+  const createUserButtonColour = useStringVariation('create-user-button-colour', 'green');
+  const appLogo = useStringVariation('app-logo', 'rocket');
   const ldClient = useLDClient();
 
   const [username, setUsername] = useState('');
@@ -34,12 +43,13 @@ function App() {
 
   useEffect(() => {
     if (ldClient) {
-      const handleChange = (changes) => {
+      const handleChange = (_context, changedKeys) => {
+        if (!Array.isArray(changedKeys)) return;
+
         console.log('##### Flags changed START #####');
-        for (let flagKey in changes) {
-          const flagValue = changes[flagKey].current;
-          console.log(`${flagKey}: ${flagValue}`);
-        }
+        changedKeys.forEach((flagKey) => {
+          console.log(`${flagKey}: ${ldClient.variation(flagKey, null)}`);
+        });
         console.log('##### Flags changed STOP #####');
       };
   
@@ -298,6 +308,30 @@ function App() {
     </div>
   );
 
+  if (initStatus === 'initializing') {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-screen">
+        <p className="text-[var(--color-text-muted)]">Loading feature flags…</p>
+      </div>
+    );
+  }
+
+  if (initStatus === 'failed') {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-screen">
+        <p className="text-red-400">LaunchDarkly init failed: {initError?.message}</p>
+      </div>
+    );
+  }
+
+  if (initStatus === 'timeout') {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-screen">
+        <p className="text-red-400">LaunchDarkly init timed out</p>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       {releaseShinyBanner && (
@@ -325,9 +359,9 @@ function App() {
           </div>
         </div>
         <div className="app-topbar-meta">
-          <span className="app-logo-badge" title={`appLogo flag: ${appLogo ?? 'rocket'}`}>
+          <span className="app-logo-badge" title={`app-logo flag: ${appLogo ?? 'rocket'}`}>
             <span className="app-logo-badge-icon">{getLogoIcon()}</span>
-            appLogo: {appLogo ?? 'rocket'}
+            app-logo: {appLogo ?? 'rocket'}
           </span>
         </div>
       </header>

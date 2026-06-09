@@ -71,25 +71,27 @@ stateDiagram-v2
 
 | Flag key | Type | UI effect |
 |----------|------|-----------|
-| `releaseShinyBanner` | boolean | Fixed promo banner at top |
-| `showNewsletterSignup` | boolean | Newsletter signup bar |
-| `createUserButtonColour` | string | `"red"` → danger button; else success |
-| `appLogo` | string | Header accent icon: `moon`, `star`, or `rocket` (default) |
+| `release-shiny-banner` | boolean | Fixed promo banner at top |
+| `show-newsletter-signup` | boolean | Newsletter signup bar |
+| `create-user-button-colour` | string | `"red"` → danger button; else success |
+| `app-logo` | string | Header accent icon: `moon`, `star`, or `rocket` (default) |
 
-All flags are listed in `AllFlagsDisplay` with values and evaluation reasons.
+Flags are read via typed variation hooks (`useBoolVariation`, `useStringVariation`) in [`src/App.jsx`](src/App.jsx). All flags are listed in `AllFlagsDisplay` with values and evaluation reasons.
 
 ## SDK configuration
 
-Initialized in [`src/main.jsx`](src/main.jsx) via `asyncWithLDProvider`:
+Initialized in [`src/main.jsx`](src/main.jsx) via `createLDReactProvider` from `@launchdarkly/react-sdk` v4:
 
 | Option | Value | Purpose |
 |--------|-------|---------|
-| `bootstrap` | `"localStorage"` | Offline / fast startup from cached flags |
-| `evaluationReasons` | `true` | Expose why each flag evaluated |
-| `sendEventsOnlyForVariation` | `true` | Send analytics only when flags are evaluated |
-| `timeout` | `5` | Init timeout (seconds) |
+| (localStorage cache) | default in v4 | SDK caches flags automatically; do **not** pass `bootstrap: 'localStorage'` (v3 magic string — in v4 it is treated as literal bootstrap data) |
+| `withReasons` | `true` | Expose why each flag evaluated (v4 name; replaces v3 `evaluationReasons`) |
 | `application.id` | `"ld-context-demo"` | Application metadata |
 | `application.version` | `"1.0"` | Matches observability plugin version |
+
+Init loading/error states are handled in [`src/App.jsx`](src/App.jsx) via `useInitializationStatus()` (`initializing`, `complete`, `timeout`, `failed`).
+
+Typed variation hooks send evaluation events automatically in v4. The `allFlags()` table in `AllFlagsDisplay` does not emit analytics events (v4 JS SDK behavior).
 
 ### Plugins
 
@@ -102,6 +104,8 @@ Initialized in [`src/main.jsx`](src/main.jsx) via `asyncWithLDProvider`:
 
 LD Toolbar (`useLaunchDarklyToolbar`) is enabled only when `import.meta.env.DEV` is true.
 
+**Note:** `@launchdarkly/toolbar@2.3.1` declares a peer dependency on `launchdarkly-js-client-sdk` v3.x. The app uses `@launchdarkly/js-client-sdk` v4 via `@launchdarkly/react-sdk`. npm may warn about the peer mismatch; toolbar is dev-only and should be re-tested when a v4-compatible toolbar is released.
+
 ## Key files
 
 | File | Responsibility |
@@ -112,7 +116,7 @@ LD Toolbar (`useLaunchDarklyToolbar`) is enabled only when `import.meta.env.DEV`
 | [`src/index.css`](src/index.css) / [`src/App.css`](src/App.css) | LaunchDarkly 2026 brand tokens and component styles |
 | [`src/brand/tokens/`](src/brand/tokens/) | Vendored LD design tokens (colors, Tailwind preset) |
 | [`.github/workflows/action.yml`](.github/workflows/action.yml) | Code references sync on push |
-| [`.launchdarkly/coderefs.yaml`](.launchdarkly/coderefs.yaml) | camelCase flag key aliases |
+| [`.launchdarkly/coderefs.yaml`](.launchdarkly/coderefs.yaml) | Optional camelCase flag key aliases (code uses exact LD keys) |
 
 ## Deployment
 

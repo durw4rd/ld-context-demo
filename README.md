@@ -28,9 +28,9 @@ The current context is displayed as formatted JSON on the page.
 
 Several flags control visible behavior:
 
-- **Promotional banners** — top-of-page offers driven by `releaseShinyBanner` and `showNewsletterSignup`
-- **Button styling** — anonymous-context button color from `createUserButtonColour`
-- **Header accent** — small icon beside the logo from `appLogo` (`moon`, `star`, or `rocket`)
+- **Promotional banners** — top-of-page offers driven by `release-shiny-banner` and `show-newsletter-signup`
+- **Button styling** — anonymous-context button color from `create-user-button-colour`
+- **Header accent** — small icon beside the logo from `app-logo` (`moon`, `star`, or `rocket`)
 
 A **Feature Flags** table lists every flag in the project with its current value and **evaluation reason** (rule match, fallthrough, etc.).
 

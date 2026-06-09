@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useLDClient } from '@launchdarkly/react-sdk';
 import { FaFlag, FaCheckCircle, FaTimesCircle, FaInfoCircle } from 'react-icons/fa';
 
 function AllFlagsDisplay() {

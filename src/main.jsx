@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-import { asyncWithLDProvider } from "launchdarkly-react-client-sdk"
-import { basicLogger } from "launchdarkly-js-client-sdk"
+import { createLDReactProvider } from '@launchdarkly/react-sdk'
+import { basicLogger } from '@launchdarkly/js-client-sdk'
 import { FlagOverridePlugin, EventInterceptionPlugin } from '@launchdarkly/toolbar/plugins'
 import Observability from '@launchdarkly/observability'
 import SessionReplay from '@launchdarkly/session-replay'
@@ -59,44 +59,39 @@ if (user) {
   };
 }
 
-const ldInitOptions = {
-  logger: basicLogger({
-    level: "debug",
-  }),
-  application: {
-    version: "1.0",
-    id: "ld-context-demo",
+const LDProvider = createLDReactProvider(
+  ldClientSideID,
+  ldDefaultContext,
+  {
+    ldOptions: {
+      logger: basicLogger({
+        level: 'debug',
+      }),
+      application: {
+        version: '1.0',
+        id: 'ld-context-demo',
+      },
+      withReasons: true,
+      plugins: [
+        flagOverridePlugin,
+        eventInterceptionPlugin,
+        new Observability({
+          networkRecording: { enabled: true },
+          version: '1.0',
+        }),
+        new SessionReplay({
+          serviceName: 'ld-context-demo',
+          privacySetting: 'strict',
+        }),
+      ],
+    },
   },
-  bootstrap: "localStorage",
-  sendEventsOnlyForVariation: true,
-  evaluationReasons: true,
-  plugins: [
-    flagOverridePlugin,
-    eventInterceptionPlugin,
-    new Observability({
-      networkRecording: { enabled: true },
-      version: '1.0',
-    }),
-    new SessionReplay({
-      serviceName: 'ld-context-demo',
-      privacySetting: 'strict',
-    }),
-  ]
-};
+);
 
-(async () => {
-  const LDProvider = await asyncWithLDProvider({
-    clientSideID: ldClientSideID,
-    context: ldDefaultContext,
-    options: ldInitOptions,
-    timeout: 5,
-  });
-
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <LDProvider>
-        <App />
-      </LDProvider>
-    </React.StrictMode>
-  )
-})();
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <LDProvider>
+      <App />
+    </LDProvider>
+  </React.StrictMode>
+)
