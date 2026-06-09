@@ -224,21 +224,29 @@
 
 .auth-input-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .auth-input-icon {
   position: absolute;
-  left: 0.875rem;
+  left: 1rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
   font-size: 0.875rem;
+  width: 1rem;
   pointer-events: none;
+  z-index: 1;
 }
 
-.auth-input-wrap input {
+.auth-input-wrap input[type="text"],
+.auth-input-wrap input[type="password"] {
   width: 100%;
-  padding: 0.85em 1em 0.85em 3rem;
+  padding-top: 0.85em;
+  padding-right: 1em;
+  padding-bottom: 0.85em;
+  padding-left: 3.25rem;
 }
 
 .auth-error {

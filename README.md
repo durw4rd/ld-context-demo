@@ -4,6 +4,8 @@ A live demo app for showing how LaunchDarkly **contexts** and **feature flags** 
 
 **Live demo:** https://ld-context-demo.vercel.app/
 
+**LaunchDarkly project:** `context-management-demo` (environment: **Test**)
+
 For technical details (SDK config, file map, context shapes), see [APP_ARCHITECTURE.md](./APP_ARCHITECTURE.md).
 
 ## What this demo shows
