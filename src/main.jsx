@@ -42,7 +42,11 @@ if (user) {
     user: {
       key: user,
       name: user,
-      customerStatus: customeStatus
+      email: `${user.toLowerCase()}@example.com`,
+      customerStatus: customeStatus,
+      _meta: {
+        privateAttributes: ['email']
+      }
     },
     anonymousUser: {
       key: getOrCreateAnonymousUserKey(),
@@ -66,6 +70,7 @@ const ldInitOptions = {
     id: "ld-context-demo",
   },
   bootstrap: "localStorage",
+  sendEventsOnlyForVariation: true,
   evaluationReasons: true,
   plugins: [
     flagOverridePlugin, 

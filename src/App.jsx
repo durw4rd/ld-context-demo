@@ -4,12 +4,12 @@ import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
-import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode } from 'react-icons/fa'
+import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar } from 'react-icons/fa'
 import AllFlagsDisplay from './components/AllFlagsDisplay'
 import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx';
 
 function App() {
-  const { releaseShinyBanner, showNewsletterSignup, createUserButtonColour } = useFlags();
+  const { releaseShinyBanner, showNewsletterSignup, createUserButtonColour, appLogo } = useFlags();
   const ldClient = useLDClient();
 
   const [username, setUsername] = useState('');
@@ -129,13 +129,21 @@ function App() {
           newUserContext = {
             key: username,
             name: username,
-            customerStatus: 'gold'
+            email: `${username.toLowerCase()}@example.com`,
+            customerStatus: 'gold',
+            _meta: {
+              privateAttributes: ['email']
+            }
           };
         } else {
           newUserContext = {
             key: username,
             name: username,
-            customerStatus: 'bronze'
+            email: `${username.toLowerCase()}@example.com`,
+            customerStatus: 'bronze',
+            _meta: {
+              privateAttributes: ['email']
+            }
           };
         }
 
@@ -199,6 +207,18 @@ function App() {
     return jsonString
       .replace(/"kind": "(\w+)"/g, '"kind": "<span class="context-kind">$1</span>"')
       .replace(/"(\w+)": {/g, '"<span class="context-attribute">$1</span>": {');
+  };
+
+  const getLogoIcon = () => {
+    switch (appLogo) {
+      case 'moon':
+        return <FaMoon />;
+      case 'star':
+        return <FaStar />;
+      case 'rocket':
+      default:
+        return <FaRocket />;
+    }
   };
 
   const getCustomerStatusBadge = () => {
@@ -336,7 +356,7 @@ function App() {
       <header className={`app-header ${releaseShinyBanner && showNewsletterSignup ? 'pt-32' : releaseShinyBanner || showNewsletterSignup ? 'pt-20' : 'pt-8'}`}>
         <div className="app-logo">
           <div className="app-logo-icon">
-            <FaRocket />
+            {getLogoIcon()}
           </div>
           <h1>LD Context Demo</h1>
         </div>
