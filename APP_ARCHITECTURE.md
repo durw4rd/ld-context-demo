@@ -86,12 +86,21 @@ Initialized in [`src/main.jsx`](src/main.jsx) via `createLDReactProvider` from `
 |--------|-------|---------|
 | (localStorage cache) | default in v4 | SDK caches flags automatically; do **not** pass `bootstrap: 'localStorage'` (v3 magic string — in v4 it is treated as literal bootstrap data) |
 | `withReasons` | `true` | Expose why each flag evaluated (v4 name; replaces v3 `evaluationReasons`) |
-| `application.id` | `"ld-context-demo"` | Application metadata |
-| `application.version` | `"1.0"` | Matches observability plugin version |
+| `applicationInfo.id` | `"ld-context-demo"` | Application metadata (v4 name; was `application` in v3) |
+| `applicationInfo.version` | `"1.0"` | Matches observability plugin version |
 
 Init loading/error states are handled in [`src/App.jsx`](src/App.jsx) via `useInitializationStatus()` (`initializing`, `complete`, `timeout`, `failed`).
 
 Typed variation hooks send evaluation events automatically in v4. The `allFlags()` table in `AllFlagsDisplay` does not emit analytics events (v4 JS SDK behavior).
+
+### Live Events in the LD UI
+
+Client SDKs primarily send **`summary`** events (aggregated evaluation counts), not individual **`feature`** events, unless:
+
+- You enable **Debug** on a flag in the LD UI (30-minute full-fidelity window), or
+- The flag has **Send detailed event information** / experiment tracking enabled
+
+In **Live Events**, filter by **Flags** and include **Summary** events — not only Feature or Custom/Telemetry. Observability plugin errors appear under custom/telemetry keys (`$ld:telemetry:*`), which is separate from flag analytics.
 
 ### Plugins
 

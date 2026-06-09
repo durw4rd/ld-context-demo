@@ -64,12 +64,13 @@ const LDProvider = createLDReactProvider(
   ldDefaultContext,
   {
     ldOptions: {
+      sendEvents: true,
       logger: basicLogger({
-        level: 'debug',
+        level: 'warn',
       }),
-      application: {
-        version: '1.0',
+      applicationInfo: {
         id: 'ld-context-demo',
+        version: '1.0',
       },
       withReasons: true,
       plugins: [

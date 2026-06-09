@@ -15,6 +15,35 @@ import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx'
 
 function App() {
   const { status: initStatus, error: initError } = useInitializationStatus();
+
+  if (initStatus === 'initializing') {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-screen">
+        <p className="text-[var(--color-text-muted)]">Loading feature flags…</p>
+      </div>
+    );
+  }
+
+  if (initStatus === 'failed') {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-screen">
+        <p className="text-red-400">LaunchDarkly init failed: {initError?.message}</p>
+      </div>
+    );
+  }
+
+  if (initStatus === 'timeout') {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-screen">
+        <p className="text-red-400">LaunchDarkly init timed out</p>
+      </div>
+    );
+  }
+
+  return <AppContent />;
+}
+
+function AppContent() {
   const releaseShinyBanner = useBoolVariation('release-shiny-banner', false);
   const showNewsletterSignup = useBoolVariation('show-newsletter-signup', false);
   const createUserButtonColour = useStringVariation('create-user-button-colour', 'green');
@@ -27,7 +56,6 @@ function App() {
   const [error, setError] = useState('');
   const [ldContext, setLdContext] = useState(null);
 
-  // Initialize LaunchDarkly developer toolbar (development only)
   useLaunchDarklyToolbar({
     flagOverridePlugin,
     eventInterceptionPlugin,
@@ -42,24 +70,15 @@ function App() {
   }, [ldClient]);
 
   useEffect(() => {
-    if (ldClient) {
-      const handleChange = (_context, changedKeys) => {
-        if (!Array.isArray(changedKeys)) return;
+    if (!ldClient) return;
 
-        console.log('##### Flags changed START #####');
-        changedKeys.forEach((flagKey) => {
-          console.log(`${flagKey}: ${ldClient.variation(flagKey, null)}`);
-        });
-        console.log('##### Flags changed STOP #####');
-      };
-  
-      ldClient.on('change', handleChange);
-  
-      // Cleanup function to remove the event listener when the component unmounts
-      return () => {
-        ldClient.off('change', handleChange);
-      };
-    }
+    const handleChange = (_context, changedKeys) => {
+      if (!Array.isArray(changedKeys) || changedKeys.length === 0) return;
+      console.log('##### Flags changed #####', changedKeys.join(', '));
+    };
+
+    ldClient.on('change', handleChange);
+    return () => ldClient.off('change', handleChange);
   }, [ldClient]);
 
   const generateNewAnonymousUserContext = async () => {
@@ -68,7 +87,6 @@ function App() {
     const existingContext = ldClient.getContext();
     const newAnonymousKey = faker.string.uuid();
     
-    // Save the new anonymous key to sessionStorage
     sessionStorage.setItem('ld_anonymous_user_key', newAnonymousKey);
     
     try {
@@ -97,10 +115,7 @@ function App() {
         setLdContext(newAnonymousUserContext);
       }
     } catch (error) {
-      // Handle network errors gracefully
       console.error('Failed to identify new anonymous user context:', error);
-      // Still update the local context even if the network call fails
-      // This allows the UI to update even when offline
       if (existingContext.kind === 'multi') {
         const updatedContext = {
           kind: 'multi',
@@ -152,7 +167,6 @@ function App() {
           };
         }
 
-        // Get the anonymous user key from sessionStorage or use the existing one
         const anonymousKey = sessionStorage.getItem('ld_anonymous_user_key') || 
                             (existingContext.anonymousUser?.key || existingContext.key);
 
@@ -169,9 +183,7 @@ function App() {
           await ldClient.identify(updatedContext);
           setLdContext(ldClient.getContext());
         } catch (error) {
-          // Handle network errors gracefully
           console.error('Failed to identify user context:', error);
-          // Still update the local context even if the network call fails
           setLdContext(updatedContext);
         }
       }
@@ -186,7 +198,6 @@ function App() {
 
     if (ldClient) {
       const existingContext = ldClient.getContext();
-      // Get the anonymous user key from sessionStorage or use the existing one
       const anonymousKey = sessionStorage.getItem('ld_anonymous_user_key') || (existingContext.anonymousUser?.key || existingContext.key);
   
       const updatedContext = {
@@ -199,9 +210,7 @@ function App() {
         await ldClient.identify(updatedContext);
         setLdContext(ldClient.getContext());
       } catch (error) {
-        // Handle network errors gracefully
         console.error('Failed to identify anonymous user context:', error);
-        // Still update the local context even if the network call fails
         setLdContext(updatedContext);
       }
     }
@@ -307,30 +316,6 @@ function App() {
       </div>
     </div>
   );
-
-  if (initStatus === 'initializing') {
-    return (
-      <div className="app-shell flex items-center justify-center min-h-screen">
-        <p className="text-[var(--color-text-muted)]">Loading feature flags…</p>
-      </div>
-    );
-  }
-
-  if (initStatus === 'failed') {
-    return (
-      <div className="app-shell flex items-center justify-center min-h-screen">
-        <p className="text-red-400">LaunchDarkly init failed: {initError?.message}</p>
-      </div>
-    );
-  }
-
-  if (initStatus === 'timeout') {
-    return (
-      <div className="app-shell flex items-center justify-center min-h-screen">
-        <p className="text-red-400">LaunchDarkly init timed out</p>
-      </div>
-    );
-  }
 
   return (
     <div className="app-shell">
