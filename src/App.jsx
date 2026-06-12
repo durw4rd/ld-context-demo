@@ -6,7 +6,7 @@ import {
   useInitializationStatus,
   useLDClient,
 } from '@launchdarkly/react-sdk';
-import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar';
+import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar/react';
 import Cookies from 'js-cookie';
 import { faker } from '@faker-js/faker'
 import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar } from 'react-icons/fa'
@@ -60,7 +60,7 @@ function AppContent() {
     flagOverridePlugin,
     eventInterceptionPlugin,
     position: 'bottom-right',
-    enabled: import.meta.env.DEV
+    enabled: import.meta.env.DEV,
   });
 
   useEffect(() => {
