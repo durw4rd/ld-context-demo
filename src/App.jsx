@@ -9,7 +9,7 @@ import {
 import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar/react';
 import { LDRecord } from '@launchdarkly/session-replay';
 import Cookies from 'js-cookie';
-import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar } from 'react-icons/fa'
+import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar, FaExternalLinkAlt } from 'react-icons/fa'
 import AllFlagsDisplay from './components/AllFlagsDisplay'
 import CookieConsentBanner from './components/CookieConsentBanner'
 import CookiePreferencesModal from './components/CookiePreferencesModal'
@@ -25,6 +25,9 @@ import {
 import { buildLDOptions } from './ld/pluginFactory'
 import { getUAInfo } from './utils/uaParser'
 import { useConsent } from './hooks/useConsent'
+
+const LD_PROJECT_FLAGS_URL =
+  'https://app.launchdarkly.com/projects/context-management-demo/flags?env=test&selected-env=test'
 
 function App() {
   const { status: initStatus, error: initError } = useInitializationStatus();
@@ -359,6 +362,16 @@ function AppContent() {
           </div>
         </div>
         <div className="app-topbar-meta">
+          <a
+            href={LD_PROJECT_FLAGS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="app-ld-project-link"
+            title="Open this app's flags in LaunchDarkly (test environment)"
+          >
+            <FaExternalLinkAlt />
+            LD project
+          </a>
           <span
             className={`consent-status-badge consent-status-${activeMode}`}
             title="Current cookie-consent mode driving the LD context/events/plugins"

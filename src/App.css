@@ -75,6 +75,32 @@
   font-size: 0.875rem;
 }
 
+.app-ld-project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.app-ld-project-link:hover {
+  color: var(--ld-white);
+  border-color: var(--ld-gray-04);
+  background: rgba(64, 91, 255, 0.08);
+}
+
+.app-ld-project-link svg {
+  color: var(--ld-blue-light);
+  font-size: 0.75rem;
+}
+
 .dashboard-main {
   flex: 1;
   padding: 1.5rem 2rem 2.5rem;
