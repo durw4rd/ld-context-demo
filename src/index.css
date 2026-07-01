@@ -104,6 +104,15 @@ button:hover::before {
   opacity: 1;
 }
 
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:disabled:hover::before {
+  opacity: 0;
+}
+
 input[type="text"],
 input[type="password"],
 input[type="email"] {

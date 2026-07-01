@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import './App.css'
 import {
   useBoolVariation,
@@ -7,11 +7,24 @@ import {
   useLDClient,
 } from '@launchdarkly/react-sdk';
 import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar/react';
+import { LDRecord } from '@launchdarkly/session-replay';
 import Cookies from 'js-cookie';
-import { faker } from '@faker-js/faker'
 import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar } from 'react-icons/fa'
 import AllFlagsDisplay from './components/AllFlagsDisplay'
-import { flagOverridePlugin, eventInterceptionPlugin } from './main.jsx'
+import CookieConsentBanner from './components/CookieConsentBanner'
+import CookiePreferencesModal from './components/CookiePreferencesModal'
+import CookiePreferencesLink from './components/CookiePreferencesLink'
+import { flagOverridePlugin, eventInterceptionPlugin } from './ld/toolbarPlugins'
+import { useLDReinit, useLDActiveMode } from './ld/ldReinitContext'
+import {
+  buildContext,
+  resolveAnonymousKeyForMode,
+  regenerateAnonymousKeyForMode,
+  clearPersistedAnonymousKey,
+} from './ld/contextBuilders'
+import { buildLDOptions } from './ld/pluginFactory'
+import { getUAInfo } from './utils/uaParser'
+import { useConsent } from './hooks/useConsent'
 
 function App() {
   const { status: initStatus, error: initError } = useInitializationStatus();
@@ -48,13 +61,26 @@ function AppContent() {
   const showNewsletterSignup = useBoolVariation('show-newsletter-signup', false);
   const createUserButtonColour = useStringVariation('create-user-button-colour', 'cyan');
   const appLogo = useStringVariation('app-logo', 'rocket');
+  const enableCookieConsent = useBoolVariation('enable-cookie-consent-banner', false);
   const ldClient = useLDClient();
+  const { status: initStatus } = useInitializationStatus();
+
+  const reinit = useLDReinit();
+  const activeMode = useLDActiveMode();
+  const { level: consentLevel, setConsent, resetConsent } = useConsent();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(Cookies.get('user') || null);
   const [error, setError] = useState('');
   const [ldContext, setLdContext] = useState(null);
+  const [anonymousKey, setAnonymousKey] = useState(() => resolveAnonymousKeyForMode(activeMode));
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+
+  // The mode implied by the flag + stored consent preference right now. When this
+  // differs from `activeMode` (what the mounted client generation was built for),
+  // the effect below upgrades/downgrades by reinitializing the LD client.
+  const desiredMode = !enableCookieConsent ? 'legacy' : consentLevel === 'analytics' ? 'analytics' : 'essential';
 
   useLaunchDarklyToolbar({
     flagOverridePlugin,
@@ -81,58 +107,59 @@ function AppContent() {
     return () => ldClient.off('change', handleChange);
   }, [ldClient]);
 
-  const generateNewAnonymousUserContext = async () => {
-    if (!ldClient) return;
-    
-    const existingContext = ldClient.getContext();
-    const newAnonymousKey = faker.string.uuid();
-    
-    sessionStorage.setItem('ld_anonymous_user_key', newAnonymousKey);
-    
-    try {
-      if (existingContext.kind === 'multi') {
-        const newAnonymousUserContext = {
-          key: newAnonymousKey,
-          anonymous: true,
-        };
-        const updatedContext = {
-          kind: 'multi',
-          anonymousUser: newAnonymousUserContext,
-          user: existingContext.user
-        };
-
-        await ldClient.identify(updatedContext);
-        setLdContext(updatedContext);
-        return;
-      } else if (existingContext.kind === 'anonymousUser') {
-        const newAnonymousUserContext = {
-          kind: 'anonymousUser',
-          key: newAnonymousKey,
-          anonymous: true,
-        };
-
-        await ldClient.identify(newAnonymousUserContext);
-        setLdContext(newAnonymousUserContext);
+  // Rebuilds the context/ldOptions for a target mode and reinitializes the LD
+  // client. A full reinit is required (rather than just `identify()`) because
+  // `sendEvents` and Observability's `productAnalytics` are construction-time-only
+  // options - they can't be toggled on an already-running client.
+  const applyMode = useCallback(
+    (mode) => {
+      if (mode !== 'analytics') {
+        clearPersistedAnonymousKey();
       }
+      const newAnonymousKey = resolveAnonymousKeyForMode(mode);
+      const uaInfo = mode === 'analytics' ? getUAInfo() : undefined;
+      const context = buildContext({ mode, username: user, anonymousKey: newAnonymousKey, uaInfo });
+      const ldOptions = buildLDOptions({
+        sendEvents: mode !== 'essential',
+        productAnalytics: mode !== 'essential',
+      });
+      reinit(mode, context, ldOptions);
+    },
+    [user, reinit],
+  );
+
+  // Cold boot (stored 'analytics' consent from a prior session, or the flag being
+  // off) as well as banner/preferences interactions all funnel through here.
+  useEffect(() => {
+    if (desiredMode === activeMode) return;
+    applyMode(desiredMode);
+  }, [desiredMode, activeMode, applyMode]);
+
+  // Start/stop session replay once the *current* client generation is ready.
+  // Observability's error tracking is unaffected by this - it's always on.
+  useEffect(() => {
+    if (initStatus !== 'complete') return;
+    if (activeMode === 'essential') {
+      LDRecord.stop();
+    } else {
+      LDRecord.start().catch(() => {});
+    }
+  }, [initStatus, activeMode]);
+
+  const generateNewAnonymousUserContext = async () => {
+    if (!ldClient || activeMode === 'essential') return;
+
+    const newAnonymousKey = regenerateAnonymousKeyForMode(activeMode);
+    setAnonymousKey(newAnonymousKey);
+    const uaInfo = activeMode === 'analytics' ? getUAInfo() : undefined;
+    const context = buildContext({ mode: activeMode, username: user, anonymousKey: newAnonymousKey, uaInfo });
+
+    try {
+      await ldClient.identify(context);
+      setLdContext(ldClient.getContext());
     } catch (error) {
       console.error('Failed to identify new anonymous user context:', error);
-      if (existingContext.kind === 'multi') {
-        const updatedContext = {
-          kind: 'multi',
-          anonymousUser: {
-            key: newAnonymousKey,
-            anonymous: true,
-          },
-          user: existingContext.user
-        };
-        setLdContext(updatedContext);
-      } else if (existingContext.kind === 'anonymousUser') {
-        setLdContext({
-          kind: 'anonymousUser',
-          key: newAnonymousKey,
-          anonymous: true,
-        });
-      }
+      setLdContext(context);
     }
   };
 
@@ -143,48 +170,15 @@ function AppContent() {
       setError('');
 
       if (ldClient) {
-        const existingContext = ldClient.getContext();
-        let newUserContext = {}
-        if (username === 'Michal') {
-          newUserContext = {
-            key: username,
-            name: username,
-            email: `${username.toLowerCase()}@example.com`,
-            customerStatus: 'gold',
-            _meta: {
-              privateAttributes: ['email']
-            }
-          };
-        } else {
-          newUserContext = {
-            key: username,
-            name: username,
-            email: `${username.toLowerCase()}@example.com`,
-            customerStatus: 'bronze',
-            _meta: {
-              privateAttributes: ['email']
-            }
-          };
-        }
-
-        const anonymousKey = sessionStorage.getItem('ld_anonymous_user_key') || 
-                            (existingContext.anonymousUser?.key || existingContext.key);
-
-        const updatedContext = {
-          kind: 'multi',
-          anonymousUser: {
-            key: anonymousKey,
-            anonymous: true
-          },
-          user: newUserContext
-        };
+        const uaInfo = activeMode === 'analytics' ? getUAInfo() : undefined;
+        const context = buildContext({ mode: activeMode, username, anonymousKey, uaInfo });
 
         try {
-          await ldClient.identify(updatedContext);
+          await ldClient.identify(context);
           setLdContext(ldClient.getContext());
         } catch (error) {
           console.error('Failed to identify user context:', error);
-          setLdContext(updatedContext);
+          setLdContext(context);
         }
       }
     } else {
@@ -197,23 +191,36 @@ function AppContent() {
     setUser(null);
 
     if (ldClient) {
-      const existingContext = ldClient.getContext();
-      const anonymousKey = sessionStorage.getItem('ld_anonymous_user_key') || (existingContext.anonymousUser?.key || existingContext.key);
-  
-      const updatedContext = {
-        kind: 'anonymousUser',
-        key: anonymousKey,
-        anonymous: true
-      };
-  
+      const uaInfo = activeMode === 'analytics' ? getUAInfo() : undefined;
+      const context = buildContext({ mode: activeMode, username: null, anonymousKey, uaInfo });
+
       try {
-        await ldClient.identify(updatedContext);
+        await ldClient.identify(context);
         setLdContext(ldClient.getContext());
       } catch (error) {
         console.error('Failed to identify anonymous user context:', error);
-        setLdContext(updatedContext);
+        setLdContext(context);
       }
     }
+  };
+
+  const handleEssentialOnly = () => {
+    setConsent('essential');
+    setPreferencesOpen(false);
+  };
+
+  const handleAcceptAll = () => {
+    setConsent('analytics');
+    setPreferencesOpen(false);
+  };
+
+  const handleSavePreferences = (analyticsEnabled) => {
+    setConsent(analyticsEnabled ? 'analytics' : 'essential');
+    setPreferencesOpen(false);
+  };
+
+  const handleResetConsent = () => {
+    resetConsent();
   };
 
   const formatContext = (context) => {
@@ -238,13 +245,19 @@ function AppContent() {
   const getCustomerStatusBadge = () => {
     const status = ldContext?.user?.customerStatus;
     if (!status) return null;
-    
+
     const isGold = status === 'gold';
     return (
       <span className={`badge ${isGold ? 'badge-gold' : 'badge-bronze'}`}>
         {status}
       </span>
     );
+  };
+
+  const getConsentStatusLabel = () => {
+    if (activeMode === 'legacy') return 'Flag Off · Legacy Behavior';
+    if (activeMode === 'analytics') return 'Consent: Accept All';
+    return 'Consent: Essential Only';
   };
 
   const loginComponent = () => (
@@ -302,11 +315,13 @@ function AppContent() {
         </div>
         <div className="profile-info-item">
           <span className="profile-info-label">Email</span>
-          <span className="profile-info-value">{user.toLowerCase()}@example.com</span>
+          <span className="profile-info-value">
+            {activeMode === 'essential' ? 'hidden (essential-only consent)' : `${user.toLowerCase()}@example.com`}
+          </span>
         </div>
         <div className="profile-info-item">
           <span className="profile-info-label">Status</span>
-          <span className="profile-info-value">{getCustomerStatusBadge()}</span>
+          <span className="profile-info-value">{getCustomerStatusBadge() || '—'}</span>
         </div>
       </div>
       <div className="context-actions">
@@ -344,6 +359,12 @@ function AppContent() {
           </div>
         </div>
         <div className="app-topbar-meta">
+          <span
+            className={`consent-status-badge consent-status-${activeMode}`}
+            title="Current cookie-consent mode driving the LD context/events/plugins"
+          >
+            {getConsentStatusLabel()}
+          </span>
           <span className="app-logo-badge" title={`app-logo flag: ${appLogo ?? 'rocket'}`}>
             <span className="app-logo-badge-icon">{getLogoIcon()}</span>
             app-logo: {appLogo ?? 'rocket'}
@@ -377,6 +398,12 @@ function AppContent() {
               <div className="context-actions">
                 <button
                   onClick={generateNewAnonymousUserContext}
+                  disabled={activeMode === 'essential'}
+                  title={
+                    activeMode === 'essential'
+                      ? 'Not needed under Essential Only consent - the anonymous key already regenerates on every reload'
+                      : 'Generates a new anonymous key and persists it'
+                  }
                   className={`w-full flex items-center justify-center gap-2 ${createUserButtonColour === 'magenta' ? 'btn-danger' : 'btn-success'}`}
                 >
                   <FaUser />
@@ -391,6 +418,26 @@ function AppContent() {
           <AllFlagsDisplay />
         </section>
       </main>
+
+      {enableCookieConsent && !consentLevel && !preferencesOpen && (
+        <CookieConsentBanner
+          onEssentialOnly={handleEssentialOnly}
+          onAcceptAll={handleAcceptAll}
+          onManagePreferences={() => setPreferencesOpen(true)}
+        />
+      )}
+
+      {enableCookieConsent && consentLevel && (
+        <CookiePreferencesLink onClick={handleResetConsent} />
+      )}
+
+      {enableCookieConsent && preferencesOpen && (
+        <CookiePreferencesModal
+          initialAnalyticsEnabled={consentLevel === 'analytics'}
+          onSave={handleSavePreferences}
+          onClose={() => setPreferencesOpen(false)}
+        />
+      )}
     </div>
   )
 }
