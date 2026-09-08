@@ -111,9 +111,9 @@ In **Live Events**, filter by **Flags** and include **Summary** events — not o
 | `Observability` | `@launchdarkly/observability` | Errors, logs, traces |
 | `SessionReplay` | `@launchdarkly/session-replay` | Session recording (`privacySetting: strict`) |
 
-LD Toolbar (`useLaunchDarklyToolbar`) is enabled only when `import.meta.env.DEV` is true.
+LD Toolbar (`useLaunchDarklyToolbar`) is always enabled, including production deploys, so the live demo can use flag overrides and event inspection.
 
-**Note:** `@launchdarkly/toolbar@2.3.1` declares a peer dependency on `launchdarkly-js-client-sdk` v3.x. The app uses `@launchdarkly/js-client-sdk` v4 via `@launchdarkly/react-sdk`. npm may warn about the peer mismatch; toolbar is dev-only and should be re-tested when a v4-compatible toolbar is released.
+**Note:** `@launchdarkly/toolbar@2.3.1` declares a peer dependency on `launchdarkly-js-client-sdk` v3.x. The app uses `@launchdarkly/js-client-sdk` v4 via `@launchdarkly/react-sdk`. npm may warn about the peer mismatch; re-test when a v4-compatible toolbar is released.
 
 ## Key files
 

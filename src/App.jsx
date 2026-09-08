@@ -89,7 +89,7 @@ function AppContent() {
     flagOverridePlugin,
     eventInterceptionPlugin,
     position: 'bottom-right',
-    enabled: import.meta.env.DEV,
+    enabled: true,
   });
 
   useEffect(() => {

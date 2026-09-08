@@ -42,7 +42,7 @@ The app includes LaunchDarkly **Observability** and **Session Replay** plugins s
 
 ### Developer toolbar
 
-When running locally in development mode, the LaunchDarkly developer toolbar provides flag overrides and event interception. It is disabled in production builds.
+The LaunchDarkly developer toolbar provides flag overrides and event interception. It is enabled in both local development and production deploys so the live demo can use it.
 
 ## Code references
 

@@ -1,0 +1,2 @@
+# Unused leftover Firebase web config; the client API key is a false-positive Gemini detector hit.
+src/utils/firebaseConfig.js
