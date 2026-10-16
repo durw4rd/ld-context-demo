@@ -4,7 +4,7 @@ A live demo app for showing how LaunchDarkly **contexts** and **feature flags** 
 
 **Live demo:** https://ld-context-demo.vercel.app/
 
-**LaunchDarkly project:** `context-management-demo` (environment: **Test**)
+**LaunchDarkly project:** `context-management-demo` (environment: **Test**). The live demo uses the US instance; a copy of the project also exists on the EU instance (`app.eu.launchdarkly.com`) for local testing — see [Running against the EU instance](#running-against-the-eu-instance).
 
 For technical details (SDK config, file map, context shapes), see [APP_ARCHITECTURE.md](./APP_ARCHITECTURE.md).
 
@@ -43,6 +43,17 @@ The app includes LaunchDarkly **Observability** and **Session Replay** plugins s
 ### Developer toolbar
 
 The LaunchDarkly developer toolbar provides flag overrides and event interception. It is enabled in both local development and production deploys so the live demo can use it.
+
+### Running against the EU instance
+
+The app defaults to the US instance (`app.launchdarkly.com`), which is what the live demo uses. A copy of `context-management-demo` also exists on the EU instance (`app.eu.launchdarkly.com`), and the app can be pointed at it locally:
+
+1. Create a gitignored `.env.eu.local` with `REACT_APP_LD_INSTANCE=eu` and the EU Test environment's client-side ID as `REACT_APP_LD_CLIENT_ID`.
+2. Run `npm run dev:eu`.
+
+In EU mode the SDK and observability plugin use the EU endpoints (see `src/ld/instance.js`), and session replay is turned off because the EU instance does not support it.
+
+**The developer toolbar does not work in EU mode.** It renders, but its login always goes through the US-only `integrations.launchdarkly.com` (there is no EU equivalent), and every toolbar feature - flag list, overrides, event view - sits behind that login. Users of an EU-only account therefore cannot use it. Setting `baseUrl` to the EU app only changes deep links. `REACT_APP_LD_TOOLBAR_AUTH_URL` lets you point the toolbar at a different auth host if one becomes available.
 
 ## Code references
 

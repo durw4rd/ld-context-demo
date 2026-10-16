@@ -17,6 +17,7 @@ Public LaunchDarkly demo for **context management** and **feature flag evaluatio
 |---------|-------|
 | Project key | `context-management-demo` |
 | Client-side ID env var | `REACT_APP_LD_CLIENT_ID` (in `.env` / Vercel) |
+| Instance | US by default; `REACT_APP_LD_INSTANCE=eu` targets the EU copy of the project (local only, `.env.eu.local` + `npm run dev:eu`) |
 | Code references | GitHub Action syncs `durw4rd/ld-context-demo` on push |
 
 ## Context lifecycle
@@ -111,7 +112,9 @@ In **Live Events**, filter by **Flags** and include **Summary** events — not o
 | `Observability` | `@launchdarkly/observability` | Errors, logs, traces |
 | `SessionReplay` | `@launchdarkly/session-replay` | Session recording (`privacySetting: strict`) |
 
-LD Toolbar (`useLaunchDarklyToolbar`) is always enabled, including production deploys, so the live demo can use flag overrides and event inspection.
+LD Toolbar (`useLaunchDarklyToolbar`) is always enabled, including production deploys, so the live demo can use flag overrides and event inspection. It is mounted in [`src/ld/LDRoot.jsx`](src/ld/LDRoot.jsx), outside the per-generation provider, so it survives client reinitialization.
+
+In EU mode ([`src/ld/instance.js`](src/ld/instance.js)) the SDK and Observability use EU endpoints and `SessionReplay` is omitted (unsupported on the EU instance). The toolbar is not usable there: its login goes through the US-only `integrations.launchdarkly.com`, and all toolbar features require that login.
 
 **Note:** `@launchdarkly/toolbar@2.3.1` declares a peer dependency on `launchdarkly-js-client-sdk` v3.x. The app uses `@launchdarkly/js-client-sdk` v4 via `@launchdarkly/react-sdk`. npm may warn about the peer mismatch; re-test when a v4-compatible toolbar is released.
 

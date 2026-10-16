@@ -6,7 +6,6 @@ import {
   useInitializationStatus,
   useLDClient,
 } from '@launchdarkly/react-sdk';
-import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar/react';
 import { LDRecord } from '@launchdarkly/session-replay';
 import Cookies from 'js-cookie';
 import { FaEnvelope, FaUser, FaLock, FaSignOutAlt, FaRocket, FaCode, FaMoon, FaStar, FaExternalLinkAlt } from 'react-icons/fa'
@@ -14,7 +13,6 @@ import AllFlagsDisplay from './components/AllFlagsDisplay'
 import CookieConsentBanner from './components/CookieConsentBanner'
 import CookiePreferencesModal from './components/CookiePreferencesModal'
 import CookiePreferencesLink from './components/CookiePreferencesLink'
-import { flagOverridePlugin, eventInterceptionPlugin } from './ld/toolbarPlugins'
 import { useLDReinit, useLDActiveMode } from './ld/ldReinitContext'
 import {
   buildContext,
@@ -25,9 +23,10 @@ import {
 import { buildLDOptions } from './ld/pluginFactory'
 import { getUAInfo } from './utils/uaParser'
 import { useConsent } from './hooks/useConsent'
+import { ldInstance } from './ld/instance'
 
 const LD_PROJECT_FLAGS_URL =
-  'https://app.launchdarkly.com/projects/context-management-demo/flags?env=test&selected-env=test'
+  `${ldInstance.appUrl}/projects/context-management-demo/flags?env=test&selected-env=test`
 
 function App() {
   const { status: initStatus, error: initError } = useInitializationStatus();
@@ -85,13 +84,6 @@ function AppContent() {
   // the effect below upgrades/downgrades by reinitializing the LD client.
   const desiredMode = !enableCookieConsent ? 'legacy' : consentLevel === 'analytics' ? 'analytics' : 'essential';
 
-  useLaunchDarklyToolbar({
-    flagOverridePlugin,
-    eventInterceptionPlugin,
-    position: 'bottom-right',
-    enabled: true,
-  });
-
   useEffect(() => {
     if (ldClient) {
       setLdContext(ldClient.getContext());
@@ -141,7 +133,7 @@ function AppContent() {
   // Start/stop session replay once the *current* client generation is ready.
   // Observability's error tracking is unaffected by this - it's always on.
   useEffect(() => {
-    if (initStatus !== 'complete') return;
+    if (initStatus !== 'complete' || !ldInstance.sessionReplaySupported) return;
     if (activeMode === 'essential') {
       LDRecord.stop();
     } else {

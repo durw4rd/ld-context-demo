@@ -2,6 +2,7 @@ import { basicLogger } from '@launchdarkly/js-client-sdk';
 import Observability from '@launchdarkly/observability';
 import SessionReplay from '@launchdarkly/session-replay';
 import { eventInterceptionPlugin, flagOverridePlugin } from './toolbarPlugins';
+import { ldInstance } from './instance';
 
 // Observability (error monitoring/logging/tracing) is always included and never
 // manualStart'd - error tracking must stay active regardless of cookie consent.
@@ -16,12 +17,17 @@ export function buildPlugins({ productAnalytics }) {
       networkRecording: { enabled: true },
       version: '1.0',
       productAnalytics,
+      ...ldInstance.observabilityEndpoints,
     }),
-    new SessionReplay({
-      serviceName: 'ld-context-demo',
-      privacySetting: 'strict',
-      manualStart: true,
-    }),
+    ...(ldInstance.sessionReplaySupported
+      ? [
+          new SessionReplay({
+            serviceName: 'ld-context-demo',
+            privacySetting: 'strict',
+            manualStart: true,
+          }),
+        ]
+      : []),
   ];
 }
 
@@ -30,6 +36,7 @@ export function buildPlugins({ productAnalytics }) {
 // non-PII diagnostic "phone home" events when we're not sending events anyway.
 export function buildLDOptions({ sendEvents, productAnalytics }) {
   return {
+    ...ldInstance.sdkEndpoints,
     sendEvents,
     diagnosticOptOut: !sendEvents,
     logger: basicLogger({ level: 'warn' }),

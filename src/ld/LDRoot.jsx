@@ -1,9 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { createLDReactProvider } from '@launchdarkly/react-sdk';
+import { useLaunchDarklyToolbar } from '@launchdarkly/toolbar/react';
 import { buildContext, resolveAnonymousKeyForMode } from './contextBuilders';
 import { buildLDOptions } from './pluginFactory';
 import { LDActiveModeContext, LDReinitContext } from './ldReinitContext';
+import { eventInterceptionPlugin, flagOverridePlugin } from './toolbarPlugins';
+import { ldInstance } from './instance';
 
 const ldClientSideID = process.env.REACT_APP_LD_CLIENT_ID;
 
@@ -25,6 +28,20 @@ function buildBootstrapConfig() {
 export default function LDRoot({ children }) {
   const configRef = useRef(buildBootstrapConfig());
   const [generation, setGeneration] = useState(0);
+
+  // Mounted here, outside the `key={generation}` Provider, so the toolbar survives
+  // client reinitialization. Remounting it tears down its shadow root, and the
+  // toolbar bundle only injects its stylesheets once per page, leaving the new
+  // instance unstyled (transparent background, missing design tokens).
+  useLaunchDarklyToolbar({
+    flagOverridePlugin,
+    eventInterceptionPlugin,
+    position: 'bottom-right',
+    enabled: true,
+    clientSideId: ldClientSideID,
+    baseUrl: ldInstance.appUrl,
+    ...(ldInstance.toolbarAuthUrl && { authUrl: ldInstance.toolbarAuthUrl }),
+  });
 
   const Provider = useMemo(
     () =>
